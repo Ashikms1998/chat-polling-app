@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 .background {
-  background-image: url("../public/css-pattern-by-magicpattern.png");
+  background-image: url("../css-pattern-by-magicpattern.png");
   background-size: cover;
   background-attachment: fixed;
   height: 100vh;

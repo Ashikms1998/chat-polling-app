@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import PollView from "./PollView";
 
 const MessageList = () => {
   const [messages, setMessages] = useState([]);
@@ -16,7 +17,6 @@ const MessageList = () => {
             withCredentials: true,
           }
         );
-        console.log(response);
         const userId = localStorage.getItem("userId");
         setLoggedInUserId(userId);
         setMessages(response.data.allMessages);
@@ -28,6 +28,18 @@ const MessageList = () => {
     };
     fetchMessages();
   }, []);
+
+  const handleVote = async (pollId, option) => {
+    try {
+      await axios.post(
+        "http://localhost:3000/auth/vote",
+        { pollId, option },
+        { withCredentials: true }
+      );
+    } catch (error) {
+      console.error("Error submitting vote:", error);
+    }
+  };
 
   return (
     <div>
@@ -52,7 +64,11 @@ const MessageList = () => {
                     : ""}
                 </span>
               </div>
-              <div className="message-body">{message.message}</div>
+              {message.type === "poll" ? (
+                <PollView poll={message} onVote={handleVote} />
+              ) : (
+                <div className="message-body">{message.message}</div>
+              )}
               <span className="message-time font-thin text-xs ">
                 {new Date(message.createdAt).toLocaleTimeString([], {
                   hour: "2-digit",
