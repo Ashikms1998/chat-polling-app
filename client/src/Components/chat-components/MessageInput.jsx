@@ -1,43 +1,61 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { FaSquarePollHorizontal } from "react-icons/fa6";
 import PollModal from "./PollModal";
 
-const MessageInput = () => {
+const MessageInput = ({ socket, setMessages }) => {
   const [message, setMessage] = useState("");
-  const [showPollModal, setShowPollModal] = useState(false);
   const [isPollModalOpen, setIsPollModalOpen] = useState(false);
-  const handleSend = () => {
-    if (message.trim()) {
-      axios
-        .post(
-          "http://localhost:3000/auth/sendMessage",
-          { message },
-          {
-            withCredentials: true,
-          }
-        )
-        .then((response) => {
-          console.log("Message sent successfully:", response.data);
-          setMessage("");
-        })
-        .catch((error) => {
-          console.error("Error sending message:", error);
-        });
+
+  const handleSend = async () => {
+    if (!message.trim()) return;
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/auth/sendMessage",
+        { message },
+        { withCredentials: true }
+      );
+      const savedMessage = response.data.savedMessage;
+      if (savedMessage) {
+        socket.emit("sendMessage", savedMessage);
+        setMessages((prevMessages) => [...prevMessages, savedMessage]);
+        setMessage("");
+      } else {
+        console.error("Message sending failed:", response.data.message);
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
     }
   };
 
-  const handleCreatePoll = (question, options) => {
-    console.log('Creating poll:', { question, options })
-    axios.post("http://localhost:3000/auth/pollData",{question, options},{
-      withCredentials:true
-    })
-    setIsPollModalOpen(false)
-  }
+  const handleCreatePoll = async (question, options) => {
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/auth/pollData",
+        { question, options },
+        { withCredentials: true }
+      );
+
+
+      const res = response.data;
+
+      console.log("This is what the res",res);
+
+      if (res) {
+        setMessages((prevMessages) => [...prevMessages, res]);
+        socket.emit("newMessage", res);
+      } else {
+        console.error("Poll creation failed:", response.data.message);
+      }
+      setIsPollModalOpen(false);
+    } catch (error) {
+      console.error("Error creating poll:", error);
+    }
+  };
 
   return (
     <>
-      <div className="message-input fixed bottom-0 left-0 w-full flex items-center p-3 bg-sky-500">
+      <div className="message-input fixed bottom-0 left-0 w-full flex items-center p-3 bg-black">
         <input
           type="text"
           className="flex-1 p-2 border border-gray-300 rounded-md"
@@ -51,7 +69,7 @@ const MessageInput = () => {
           onClick={() => setIsPollModalOpen(true)}
           className="flex-shrink-0 relative"
         >
-          <FaSquarePollHorizontal className="text-2xl text-black" />
+          <FaSquarePollHorizontal className="text-2xl text-white ml-4" />
         </button>
         <button
           onClick={handleSend}

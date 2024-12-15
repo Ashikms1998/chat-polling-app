@@ -1,42 +1,22 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 import PollView from "./PollView";
+import { toast } from "react-toastify";
 
-const MessageList = () => {
-  const [messages, setMessages] = useState([]);
-  const [loggedInUserId, setLoggedInUserId] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchMessages = async () => {
-      try {
-        const response = await axios.get(
-          "http://localhost:3000/auth/getMessages",
-          {
-            withCredentials: true,
-          }
-        );
-        const userId = localStorage.getItem("userId");
-        setLoggedInUserId(userId);
-        setMessages(response.data.allMessages);
-      } catch (error) {
-        console.error("Error fetching messages:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchMessages();
-  }, []);
-
+const MessageList = ({ socket, messages, loggedInUserId, loading }) => {
+  
   const handleVote = async (pollId, option) => {
     try {
-      await axios.post(
+      const res = await axios.post(
         "http://localhost:3000/auth/vote",
         { pollId, option },
         { withCredentials: true }
       );
+      toast.success("Vote registered successfully!");
     } catch (error) {
+      const errorMessage =
+        error.response?.data?.message || "An error occurred!";
+      toast.error(errorMessage);
       console.error("Error submitting vote:", error);
     }
   };

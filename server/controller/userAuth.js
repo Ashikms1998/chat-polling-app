@@ -95,7 +95,7 @@ export const sendMessage = async (req, res) => {
     await newMessage.save();
     res
       .status(201)
-      .json({ success: true, message: "Message sent successfully" });
+      .json({ success: true, message: "Message sent successfully",savedMessage: newMessage });
   } catch (error) {
     console.error("Error sending message:", error);
     res
@@ -147,11 +147,27 @@ export const pollData = async (req, res) => {
     });
     const savedMessage = await newMessage.save();
 
+
+    const populatedMessage = await Message.findById(savedMessage._id).populate(
+      "senderId",
+      "username"
+    );
+    console.log("This is the populated message",populatedMessage,"votes", savedPoll.options.map(option => option.votes));
+    
     res.status(201).json({
-      message: "Poll created successfully",
-      poll: savedPoll,
-      chatMessage: savedMessage,
+      _id: populatedMessage._id,
+      senderId: {
+        username: populatedMessage.senderId.username,
+      },
+      pollId: {
+        question: savedPoll.question,
+        options: savedPoll.options,
+        // votes: savedPoll.options.map(option => option.votes),
+      },
     });
+
+
+
   } catch (error) {
     console.error("Error saving poll data:", error);
     res
@@ -169,17 +185,35 @@ export const addVote = async (req, res) => {
     }
     const { pollId, option } = req.body;
     if (!pollId || !option) {
-      return res.status(400).json({ message: "Poll ID and option are required" });
+      return res
+        .status(400)
+        .json({ message: "Poll ID and option are required" });
     }
     const poll = await Message.findById(pollId);
-    console.log("This is the one brossss", pollId, option, poll.pollId);
 
+    if (!poll) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+    const pollDetails = await Poll.findById(poll.pollId);
+    const hasVoted = pollDetails.voters.some((voter) => {
+      if (voter.toString() === decoded.userid) {
+        return true;
+      }
+    });
+    if (hasVoted) {
+      return res
+        .status(400)
+        .json({ message: "You have already voted in this poll" });
+    }
     const addingPoll = await Poll.findByIdAndUpdate(
       poll.pollId,
-      { $inc: { [`votes.${option}`]: 1 } },
+      {
+        $inc: { [`votes.${option}`]: 1 },
+        $push: { voters: decoded.userid },
+      },
       { new: true, runValidators: true }
     );
-    console.log(addingPoll,"This is the poll");
+    console.log(addingPoll, "This is the poll");
     if (!addingPoll) {
       return res.status(404).json({ message: "Poll not found" });
     }
@@ -188,8 +222,6 @@ export const addVote = async (req, res) => {
       message: "Vote registered successfully",
       updatedPoll: addingPoll,
     });
-
-
   } catch (error) {
     console.error("Error saving poll vote data:", error);
     res

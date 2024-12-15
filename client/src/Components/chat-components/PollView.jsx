@@ -25,7 +25,7 @@ const PollView = ({ poll, onVote }) => {
     }
   };
 
-  const voteMap = new Map(Object.entries(votes));
+  const voteMap = new Map(Object.entries(votes|| {}));
   const totalVotes = Array.from(voteMap.values()).reduce(
     (sum, count) => sum + count,
     0
@@ -39,7 +39,7 @@ const PollView = ({ poll, onVote }) => {
       </CardHeader>
       <CardContent>
         <RadioGroup onValueChange={setSelectedOption} className="space-y-2">
-          {options.map((option, index) => {
+          {options?.map((option, index) => {
             const voteCount = voteMap.get(option) || 0;
             const percentage =
               totalVotes > 0 ? (voteCount / totalVotes) * 100 : 0;
