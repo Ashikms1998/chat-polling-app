@@ -47,10 +47,37 @@ const ChatRoom = () => {
   useEffect(() => {
     if (!socket) return;
     socket.on("receiveMessage", (newMessage) => {
+      console.log("📃 docs : ",newMessage )
       setMessages((prevMessages) => [...prevMessages, newMessage]);
     });
     return () => {
       socket.off("receiveMessage");
+    };
+  }, [socket]);
+
+  useEffect(() => {
+    if (!socket) return;
+    
+    socket.on("pollUpdated", (updatedPoll) => {
+      console.log("Poll updated data:", updatedPoll);
+    
+      setMessages((prevMessages) =>
+        prevMessages.map((message) => {
+          if (message.pollId && message.pollId._id === updatedPoll._id) {
+            console.log("Updating message with pollId:", message.pollId._id);
+            return {
+              ...message,
+              pollId: updatedPoll,
+            };
+          }
+          return message;
+        })
+      );
+    });
+    
+  
+    return () => {
+      socket.off("pollUpdated");
     };
   }, [socket]);
 
@@ -86,7 +113,7 @@ const ChatRoom = () => {
   return (
     <div className="background">
       <ChatHeader />
-      <MessageList socket={socket} messages={messages} setLoading={loading} loggedInUserId={loggedInUserId} loading={loading}/>
+      <MessageList socket={socket} messages={messages}  setMessages={setMessages} setLoading={loading} loggedInUserId={loggedInUserId} loading={loading}/>
       <MessageInput socket={socket} setMessages={setMessages} />
     </div>
   );

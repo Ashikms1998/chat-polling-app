@@ -98,6 +98,11 @@
   font-size: 16px;
   color: #222;
 }
+.message-list-container {
+  height: 100vh; /* Set an appropriate height */
+  overflow-y: auto;
+}
+
 
 @layer base {
   :root {

@@ -18,7 +18,13 @@ const MessageInput = ({ socket, setMessages }) => {
       const savedMessage = response.data.savedMessage;
       if (savedMessage) {
         socket.emit("sendMessage", savedMessage);
-        setMessages((prevMessages) => [...prevMessages, savedMessage]);
+        const response = await axios.get(
+          "http://localhost:3000/auth/getMessages",
+          {
+            withCredentials: true,
+          }
+        );
+        setMessages(response.data.allMessages);
         setMessage("");
       } else {
         console.error("Message sending failed:", response.data.message);
@@ -30,20 +36,27 @@ const MessageInput = ({ socket, setMessages }) => {
 
   const handleCreatePoll = async (question, options) => {
     try {
+      console.log("Handle create poll")
       const response = await axios.post(
         "http://localhost:3000/auth/pollData",
         { question, options },
         { withCredentials: true }
       );
 
-
       const res = response.data;
 
-      console.log("This is what the res",res);
+      console.log("This is what the res", res);
 
       if (res) {
-        setMessages((prevMessages) => [...prevMessages, res]);
-        socket.emit("newMessage", res);
+        socket.emit("sendMessage", res);
+        const response = await axios.get(
+          "http://localhost:3000/auth/getMessages",
+          {
+            withCredentials: true,
+          }
+        );
+        setMessages(response.data.allMessages);
+        setMessage("");
       } else {
         console.error("Poll creation failed:", response.data.message);
       }

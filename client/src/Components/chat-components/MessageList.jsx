@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import PollView from "./PollView";
 import { toast } from "react-toastify";
 
-const MessageList = ({ socket, messages, loggedInUserId, loading }) => {
-  
+const MessageList = ({ socket, messages,setMessages, loggedInUserId, loading }) => {
+  const messagesEndRef = useRef(null);
   const handleVote = async (pollId, option) => {
     try {
       const res = await axios.post(
@@ -12,6 +12,17 @@ const MessageList = ({ socket, messages, loggedInUserId, loading }) => {
         { pollId, option },
         { withCredentials: true }
       );
+      console.log("THis is res",res)
+      if (res) {
+        socket.emit("voteCast", res);
+              const response = await axios.get(
+                "http://localhost:3000/auth/getMessages",
+                {
+                  withCredentials: true,
+                }
+              );
+              setMessages(response.data.allMessages);
+            }
       toast.success("Vote registered successfully!");
     } catch (error) {
       const errorMessage =
@@ -20,9 +31,15 @@ const MessageList = ({ socket, messages, loggedInUserId, loading }) => {
       console.error("Error submitting vote:", error);
     }
   };
+  
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
 
   return (
-    <div>
+    <div className="message-list-container">
       {loading ? (
         <div className="loading-screen">
           <div className="blur-background"></div>
@@ -39,9 +56,7 @@ const MessageList = ({ socket, messages, loggedInUserId, loading }) => {
             >
               <div className="message-header">
                 <span className="message-username">
-                  {message.senderId._id != loggedInUserId
-                    ? message.senderId.username
-                    : ""}
+                  {message.senderId.username||message.username}
                 </span>
               </div>
               {message.type === "poll" ? (
@@ -57,6 +72,7 @@ const MessageList = ({ socket, messages, loggedInUserId, loading }) => {
               </span>
             </div>
           ))}
+          <div ref={messagesEndRef} />
         </div>
       )}
     </div>

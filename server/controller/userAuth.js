@@ -84,12 +84,14 @@ export const sendMessage = async (req, res) => {
     const { message } = req.body;
     const token = req.cookies.token;
     const decoded = jwt.verify(token, process.env.KEY);
+    
     if (!decoded.userid) {
       return res.status(400).json({ error: "Invalid token." });
     }
     const newMessage = new Message({
       type: "message",
       senderId: decoded.userid,
+      username:decoded.username,
       message,
     });
     await newMessage.save();
@@ -143,30 +145,31 @@ export const pollData = async (req, res) => {
     const newMessage = new Message({
       type: "poll",
       senderId: decoded.userid,
+      username:decoded.username,
       pollId: savedPoll._id,
     });
     const savedMessage = await newMessage.save();
 
-
-    const populatedMessage = await Message.findById(savedMessage._id).populate(
-      "senderId",
-      "username"
-    );
-    console.log("This is the populated message",populatedMessage,"votes", savedPoll.options.map(option => option.votes));
+    console.log("fetching ........");
     
-    res.status(201).json({
-      _id: populatedMessage._id,
-      senderId: {
-        username: populatedMessage.senderId.username,
-      },
-      pollId: {
-        question: savedPoll.question,
-        options: savedPoll.options,
-        // votes: savedPoll.options.map(option => option.votes),
-      },
-    });
+    const populatedMessage = await Message.findById(savedMessage._id)
+    .populate("senderId", "username") // Populates the username from the User collection
+    .populate("pollId"); // Populates the full Poll document
+  
+    console.log("This is the populated message",populatedMessage,);
+    
+    // res.status(201).json({
+    //   _id: populatedMessage._id,
+    //   senderId: {
+    //     username: populatedMessage.senderId.username,
+    //   },
+    //   pollId: {
+    //     question: savedPoll.question,
+    //     options: savedPoll.options,
+    //   },
+    // });
 
-
+   res.status(201).json(populatedMessage)
 
   } catch (error) {
     console.error("Error saving poll data:", error);

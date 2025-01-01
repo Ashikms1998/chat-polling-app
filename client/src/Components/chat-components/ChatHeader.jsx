@@ -21,9 +21,9 @@ const ChatHeader = () => {
       });
   };
   return (
-    <div className="bg-black text-white text-center p-4 pt-10 flex justify-between items-center">
+    <div className="bg-black text-white text-center p-4 pt-0 flex justify-between items-center">
       <h1 className="text-lg font-bold">Voting Session</h1>
-      <span className="text-sm">Online Users: 5</span>
+      
       <button
         onClick={handleLogout}
         className="px-4 py-2 mt-4 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2"

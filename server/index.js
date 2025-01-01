@@ -35,11 +35,15 @@ mongoose
   .catch((err) => console.error("Failed to connect to MongoDB:", err));
 
 io.on("connection", (socket) => {
-  console.log("New Client Connected", socket.id);
   socket.on("sendMessage", (message) => {
     console.log("Message received", message);
     socket.broadcast.emit("receiveMessage", message);
+    
   });
+socket.on("voteCast",(res)=>{
+  console.log("voteCast received", res.data.updatedPoll);
+  socket.broadcast.emit("pollUpdated", res.data.updatedPoll)
+})
 
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);
@@ -49,3 +53,4 @@ io.on("connection", (socket) => {
 server.listen(process.env.PORT, () => {
   console.log(`Server running on port ${process.env.PORT}...`);
 });
+ 
